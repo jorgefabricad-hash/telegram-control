@@ -8,9 +8,6 @@ from database.db import init_db
 from bot.handlers import register
 from api.server import app as fastapi_app
 
-sys.stdout.reconfigure(encoding="utf-8")
-sys.stderr.reconfigure(encoding="utf-8")
-
 
 def run_api():
     uvicorn.run(fastapi_app, host="0.0.0.0", port=API_PORT, log_level="warning")
@@ -35,17 +32,19 @@ async def run_bot():
 
 def main():
     if not BOT_TOKEN:
-        print("❌ BOT_TOKEN não configurado. Copie .env.example para .env e preencha.")
+        print("BOT_TOKEN nao configurado.")
         return
     if ALLOWED_USER_ID == 0:
-        print("❌ ALLOWED_USER_ID não configurado. Preencha seu Telegram Chat ID no .env.")
+        print("ALLOWED_USER_ID nao configurado.")
         return
 
-    init_db()
-    print("✅ Banco de dados inicializado.")
-
+    # Start API first so Render detects the open port quickly
     api_thread = threading.Thread(target=run_api, daemon=True)
     api_thread.start()
+    import time; time.sleep(3)
+
+    init_db()
+    print("Banco de dados inicializado.")
 
     asyncio.run(run_bot())
 

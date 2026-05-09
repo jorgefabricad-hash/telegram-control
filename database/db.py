@@ -10,8 +10,6 @@ DATABASE_URL = os.getenv("DATABASE_URL", "")
 @contextmanager
 def get_conn():
     url = urllib.parse.urlparse(DATABASE_URL)
-    import sys
-    print(f"[DB] host={url.hostname} port={url.port} user={url.username} db={url.path}", file=sys.stderr, flush=True)
     conn = psycopg2.connect(
         host=url.hostname,
         port=url.port or 5432,
