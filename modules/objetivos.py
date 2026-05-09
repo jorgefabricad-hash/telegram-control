@@ -26,6 +26,26 @@ async def show_menu(query):
     )
 
 
+async def iniciar_atualizar(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Entry point correto para atualizar progresso de objetivo."""
+    query = update.callback_query
+    await query.answer()
+    rows = fetch_all("SELECT id, titulo FROM objetivos WHERE status='ativo'")
+    if not rows:
+        await query.edit_message_text(
+            "Nenhum objetivo ativo para atualizar.",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Voltar", callback_data="menu_objetivos")]]),
+        )
+        return ConversationHandler.END
+    buttons = [[InlineKeyboardButton(r["titulo"], callback_data=f"obj_sel:{r['id']}")] for r in rows]
+    buttons.append([InlineKeyboardButton("❌ Cancelar", callback_data="cancelar")])
+    await query.edit_message_text(
+        "Qual objetivo deseja atualizar?",
+        reply_markup=InlineKeyboardMarkup(buttons),
+    )
+    return ATU_ESCOLHER
+
+
 async def handle_callback(query, context, data: str):
     if data == "obj_listar":
         rows = fetch_all("SELECT * FROM objetivos WHERE status='ativo' ORDER BY prazo ASC")
@@ -174,7 +194,10 @@ async def atu_receber_nota(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def conversation_handler() -> ConversationHandler:
     return ConversationHandler(
-        entry_points=[CallbackQueryHandler(obj_novo_titulo, pattern="^obj_novo$")],
+        entry_points=[
+            CallbackQueryHandler(obj_novo_titulo, pattern="^obj_novo$"),
+            CallbackQueryHandler(iniciar_atualizar, pattern="^obj_atualizar$"),
+        ],
         states={
             OBJ_TITULO: [MessageHandler(filters.TEXT & ~filters.COMMAND, receber_titulo)],
             OBJ_META: [MessageHandler(filters.TEXT & ~filters.COMMAND, receber_meta)],

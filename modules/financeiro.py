@@ -27,6 +27,21 @@ def _calcular_saldo() -> float:
     return float(r["s"]) if r else 0.0
 
 
+async def iniciar_lancamento(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Entry point correto para o ConversationHandler (recebe Update, não CallbackQuery)."""
+    query = update.callback_query
+    await query.answer()
+    data = query.data
+    context.user_data["fin_tipo"] = "receita" if data == "fin_receita" else "despesa"
+    label = "➕ Receita" if data == "fin_receita" else "➖ Despesa"
+    await query.edit_message_text(
+        f"{label}\n\nDigite o *valor* (ex: 150.00):",
+        parse_mode="Markdown",
+        reply_markup=menu_cancelar(),
+    )
+    return AGUARDA_VALOR
+
+
 async def handle_callback(query, context, data: str):
     if data == "fin_saldo":
         saldo = _calcular_saldo()
@@ -132,7 +147,7 @@ async def cancelar(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def conversation_handler() -> ConversationHandler:
     return ConversationHandler(
-        entry_points=[CallbackQueryHandler(handle_callback, pattern="^fin_(receita|despesa)$")],
+        entry_points=[CallbackQueryHandler(iniciar_lancamento, pattern="^fin_(receita|despesa)$")],
         states={
             AGUARDA_VALOR: [MessageHandler(filters.TEXT & ~filters.COMMAND, receber_valor)],
             AGUARDA_CATEGORIA: [CallbackQueryHandler(receber_categoria, pattern="^fin_cat:")],
