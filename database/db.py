@@ -1,4 +1,5 @@
 import os
+import urllib.parse
 import psycopg2
 import psycopg2.extras
 from contextlib import contextmanager
@@ -8,7 +9,16 @@ DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 @contextmanager
 def get_conn():
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+    url = urllib.parse.urlparse(DATABASE_URL)
+    conn = psycopg2.connect(
+        host=url.hostname,
+        port=url.port or 5432,
+        database=url.path.lstrip("/"),
+        user=url.username,
+        password=url.password,
+        sslmode="require",
+        cursor_factory=psycopg2.extras.RealDictCursor,
+    )
     try:
         yield conn
         conn.commit()
