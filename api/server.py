@@ -1,23 +1,15 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import APIRouter
 from database.db import fetch_all, fetch_one
 
-app = FastAPI(title="Controle Pessoal API", version="1.0.0")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET"],
-    allow_headers=["*"],
-)
+router = APIRouter()
 
 
-@app.get("/")
+@router.get("/")
 def root():
     return {"status": "ok", "endpoints": ["/transacoes", "/km", "/objetivos", "/resumo", "/categorias"]}
 
 
-@app.get("/transacoes")
+@router.get("/transacoes")
 def transacoes(tipo: str = None, categoria: str = None, limit: int = 500):
     query = "SELECT * FROM transacoes WHERE 1=1"
     params = []
@@ -32,7 +24,7 @@ def transacoes(tipo: str = None, categoria: str = None, limit: int = 500):
     return fetch_all(query, tuple(params))
 
 
-@app.get("/km")
+@router.get("/km")
 def km(tipo: str = None, limit: int = 500):
     query = "SELECT * FROM km_registros WHERE 1=1"
     params = []
@@ -44,7 +36,7 @@ def km(tipo: str = None, limit: int = 500):
     return fetch_all(query, tuple(params))
 
 
-@app.get("/objetivos")
+@router.get("/objetivos")
 def objetivos(status: str = None):
     query = "SELECT * FROM objetivos WHERE 1=1"
     params = []
@@ -55,7 +47,7 @@ def objetivos(status: str = None):
     return fetch_all(query, tuple(params))
 
 
-@app.get("/objetivos/{objetivo_id}/historico")
+@router.get("/objetivos/{objetivo_id}/historico")
 def historico_objetivo(objetivo_id: int):
     return fetch_all(
         "SELECT * FROM objetivos_historico WHERE objetivo_id=? ORDER BY data ASC",
@@ -63,22 +55,22 @@ def historico_objetivo(objetivo_id: int):
     )
 
 
-@app.get("/categorias")
+@router.get("/categorias")
 def categorias():
     return fetch_all("SELECT * FROM categorias ORDER BY tipo, nome")
 
 
-@app.get("/resumo")
+@router.get("/resumo")
 def resumo():
     saldo = fetch_one(
-        "SELECT COALESCE(SUM(CASE WHEN tipo='receita' THEN valor ELSE -valor END),0) AS s FROM transacoes"
+        "SELECT COALESCE(SUM(CASE WHEN tipo='receita' THEN valor ELSE -valor END),0)::float AS s FROM transacoes"
     )["s"]
-    receitas = fetch_one("SELECT COALESCE(SUM(valor),0) AS s FROM transacoes WHERE tipo='receita'")["s"]
-    despesas = fetch_one("SELECT COALESCE(SUM(valor),0) AS s FROM transacoes WHERE tipo='despesa'")["s"]
-    km_total = fetch_one("SELECT COALESCE(SUM(km_percorridos),0) AS s FROM km_registros WHERE tipo='viagem'")["s"]
-    combustivel = fetch_one("SELECT COALESCE(SUM(custo_total),0) AS s FROM km_registros WHERE tipo='abastecimento'")["s"]
-    obj_ativos = fetch_one("SELECT COUNT(*) AS n FROM objetivos WHERE status='ativo'")["n"]
-    obj_concluidos = fetch_one("SELECT COUNT(*) AS n FROM objetivos WHERE status='concluido'")["n"]
+    receitas = fetch_one("SELECT COALESCE(SUM(valor),0)::float AS s FROM transacoes WHERE tipo='receita'")["s"]
+    despesas = fetch_one("SELECT COALESCE(SUM(valor),0)::float AS s FROM transacoes WHERE tipo='despesa'")["s"]
+    km_total = fetch_one("SELECT COALESCE(SUM(km_percorridos),0)::float AS s FROM km_registros WHERE tipo='viagem'")["s"]
+    combustivel = fetch_one("SELECT COALESCE(SUM(custo_total),0)::float AS s FROM km_registros WHERE tipo='abastecimento'")["s"]
+    obj_ativos = fetch_one("SELECT COUNT(*)::int AS n FROM objetivos WHERE status='ativo'")["n"]
+    obj_concluidos = fetch_one("SELECT COUNT(*)::int AS n FROM objetivos WHERE status='concluido'")["n"]
 
     despesas_mes = fetch_all(
         "SELECT TO_CHAR(data,'YYYY-MM') AS mes, SUM(valor)::float AS total "
@@ -89,7 +81,7 @@ def resumo():
         "FROM transacoes WHERE tipo='receita' GROUP BY mes ORDER BY mes DESC LIMIT 12"
     )
     por_categoria = fetch_all(
-        "SELECT categoria, tipo, SUM(valor) AS total FROM transacoes GROUP BY categoria, tipo ORDER BY total DESC"
+        "SELECT categoria, tipo, SUM(valor)::float AS total FROM transacoes GROUP BY categoria, tipo ORDER BY total DESC"
     )
 
     return {
