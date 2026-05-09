@@ -52,7 +52,7 @@ async def menu_callback(update: Update, context):
     elif data in ("fin_receita", "fin_despesa", "fin_saldo", "fin_extrato"):
         await financeiro.handle_callback(query, context, data)
     elif data == "menu_despesas":
-        await despesas.show_menu(query, context)
+        await despesas.show_menu(update, context)
     elif data == "menu_km":
         await km.show_menu(query)
     elif data in ("km_abastecimento", "km_viagem", "km_resumo"):
@@ -72,11 +72,11 @@ async def menu_callback(update: Update, context):
         from modules.relatorios import handle_relatorio
         await handle_relatorio(query, context, data)
     elif data == "menu_arquivos":
-        await arquivos.show_menu(query, context)
+        await arquivos.show_menu(update, context)
     elif data.startswith("arq_"):
         await arquivos.handle_callback(query, context, data)
     elif data == "menu_cmd":
-        await comandos.show_menu(query, context)
+        await comandos.show_menu(update, context)
     elif data == "cancelar":
         await query.edit_message_text("❌ Operação cancelada.")
         context.user_data.clear()

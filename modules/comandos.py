@@ -21,15 +21,18 @@ def _is_blocked(cmd: str) -> bool:
     return any(b in lower for b in BLOCKED_COMMANDS)
 
 
-async def show_menu(query, context):
-    await query.edit_message_text(
+async def show_menu(update: Update, context):
+    text = (
         "💻 *Executar Comando*\n\n"
         "Digite o comando a executar no terminal do PC.\n"
         "⚠️ Comandos destrutivos são bloqueados.\n\n"
-        "_Exemplo:_ `dir C:\\Users` ou `ipconfig`",
-        parse_mode="Markdown",
-        reply_markup=menu_cancelar(),
+        "_Exemplo:_ `dir C:\\Users` ou `ipconfig`"
     )
+    if update.callback_query:
+        await update.callback_query.answer()
+        await update.callback_query.edit_message_text(text, parse_mode="Markdown", reply_markup=menu_cancelar())
+    else:
+        await update.message.reply_text(text, parse_mode="Markdown", reply_markup=menu_cancelar())
     return AGUARDA_CMD
 
 

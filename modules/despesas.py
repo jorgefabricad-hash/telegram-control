@@ -14,21 +14,24 @@ from reports.generator import gerar_todos
 AGUARDA_VALOR, AGUARDA_CATEGORIA, AGUARDA_DESCRICAO = range(3)
 
 
-async def show_menu(query, context):
+async def show_menu(update: Update, context):
     hoje = float(fetch_one(
         "SELECT COALESCE(SUM(valor),0)::float AS s FROM transacoes WHERE tipo='despesa' AND data=CURRENT_DATE"
     )["s"])
     mes = float(fetch_one(
         "SELECT COALESCE(SUM(valor),0)::float AS s FROM transacoes WHERE tipo='despesa' AND TO_CHAR(data,'YYYY-MM')=TO_CHAR(NOW(),'YYYY-MM')"
     )["s"])
-    await query.edit_message_text(
+    text = (
         f"💸 *Registro de Despesas*\n\n"
         f"Hoje: R$ {hoje:.2f}\n"
         f"Este mês: R$ {mes:.2f}\n\n"
-        f"Digite o valor da despesa:",
-        parse_mode="Markdown",
-        reply_markup=menu_cancelar(),
+        f"Digite o valor da despesa:"
     )
+    if update.callback_query:
+        await update.callback_query.answer()
+        await update.callback_query.edit_message_text(text, parse_mode="Markdown", reply_markup=menu_cancelar())
+    else:
+        await update.message.reply_text(text, parse_mode="Markdown", reply_markup=menu_cancelar())
     context.user_data["fin_tipo"] = "despesa"
     return AGUARDA_VALOR
 

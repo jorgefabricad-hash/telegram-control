@@ -45,14 +45,14 @@ def _fmt_size(b: int) -> str:
     return f"{b:.1f}TB"
 
 
-async def show_menu(query, context):
+async def show_menu(update: Update, context):
     context.user_data["arq_path"] = str(HOME)
-    text = _listar_dir(HOME)
-    await query.edit_message_text(
-        text + "\n\n_Digite o caminho completo de um arquivo para baixar, ou uma pasta para navegar._",
-        parse_mode="Markdown",
-        reply_markup=menu_cancelar(),
-    )
+    text = _listar_dir(HOME) + "\n\n_Digite o caminho completo de um arquivo para baixar, ou uma pasta para navegar._"
+    if update.callback_query:
+        await update.callback_query.answer()
+        await update.callback_query.edit_message_text(text, parse_mode="Markdown", reply_markup=menu_cancelar())
+    else:
+        await update.message.reply_text(text, parse_mode="Markdown", reply_markup=menu_cancelar())
     return AGUARDA_CAMINHO
 
 
