@@ -40,8 +40,8 @@ async def lifespan(app: FastAPI):
 
     if not RENDER_URL:
         await _bot_app.updater.stop()
-    await _bot_app.stop()
-    await _bot_app.shutdown()
+        await _bot_app.stop()
+        await _bot_app.shutdown()
 
 
 app = FastAPI(title="Controle Pessoal API", version="1.0.0", lifespan=lifespan)
