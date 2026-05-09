@@ -7,7 +7,7 @@ from telegram.ext import (
     filters,
     ConversationHandler,
 )
-from config import ALLOWED_USER_ID
+from config import ALLOWED_USER_IDS
 from bot.menus import menu_principal
 from modules import financeiro, despesas, km, objetivos, arquivos, comandos
 
@@ -15,7 +15,7 @@ from modules import financeiro, despesas, km, objetivos, arquivos, comandos
 def only_owner(func):
     async def wrapper(update: Update, context):
         user_id = update.effective_user.id
-        if user_id != ALLOWED_USER_ID:
+        if user_id not in ALLOWED_USER_IDS:
             if update.message:
                 await update.message.reply_text("⛔ Acesso negado.")
             elif update.callback_query:
