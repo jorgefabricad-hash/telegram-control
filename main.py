@@ -38,9 +38,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    if RENDER_URL:
-        await _bot_app.bot.delete_webhook()
-    else:
+    if not RENDER_URL:
         await _bot_app.updater.stop()
     await _bot_app.stop()
     await _bot_app.shutdown()
