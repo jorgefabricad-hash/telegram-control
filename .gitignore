@@ -1,0 +1,8 @@
+.env
+*.db
+__pycache__/
+*.pyc
+reports/exports/
+bot.log
+bot_err.log
+setup_chatid.py
